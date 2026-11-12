@@ -107,6 +107,8 @@ def ranking_metrics(pool, score, rel, k=10, users=None):
     n_rel = np.diff(rel.indptr)
     users = np.unique(pool.user) if users is None else np.asarray(users)
     users = users[n_rel[users] > 0]
+    if len(users) == 0:
+        return {f'Precision@{k}': np.nan, f'Recall@{k}': np.nan, f'nDCG@{k}': np.nan}
     rows, pos = topk_rows(pool.user.values, score, k)
     hit   = pool.hit.values[rows].astype(float)
     disc  = 1 / np.log2(np.arange(2, k + 2))

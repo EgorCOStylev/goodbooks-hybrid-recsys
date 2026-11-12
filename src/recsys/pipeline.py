@@ -87,10 +87,11 @@ def simulate_new_users(train, rel, index, n_users=3000, keep=(1, 2, 3), min_trai
     return train, np.sort(chosen)
 
 
-def scored_pool(fitted, users, rel, n_per_model=100, chunk=2000, feature_cols=POOL_FEATURES):
-    """Candidate pool with relevance labels and rank-normalised feature columns."""
+def scored_pool(fitted, users, rel=None, n_per_model=100, chunk=2000, feature_cols=POOL_FEATURES):
+    """Candidate pool with rank-normalised feature columns and, if rel is given, relevance labels."""
     pool = hybrid.build_pool(fitted.generators, users, fitted.R_ind, n_per_model, chunk)
-    pool = hybrid.attach_relevance(pool, rel)
+    if rel is not None:
+        pool = hybrid.attach_relevance(pool, rel)
     cols = (fitted.pair(pool.user.values, pool.book.values)
             .join(fitted.book_feats.iloc[pool.book.values].reset_index(drop=True)))
     pool = hybrid.add_columns(pool, cols[list(feature_cols)])
