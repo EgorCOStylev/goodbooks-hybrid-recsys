@@ -16,7 +16,7 @@ from .content import is_service
 # so "science" counts as non-fiction but "science-fiction" does not.
 GENRE_RULES = {
     'fantasy':            [(('fantasy',), ())],
-    'science_fiction':    [(('science', 'fiction'), ()), (('sci', 'fi'), ()), (('scifi',), ()),
+    'science_fiction':    [(('science', 'fiction'), ()), (('sci', 'fi'), ()), (('scifi',), ()), (('sf',), ()),
                            (('dystopia',), ()), (('dystopian',), ())],
     'romance':            [(('romance',), ()), (('romantic',), ()), (('chick', 'lit'), ())],
     'mystery_crime':      [(('mystery',), ()), (('mysteries',), ()), (('crime',), ()), (('detective',), ())],
@@ -29,7 +29,7 @@ GENRE_RULES = {
                            (('picture', 'books'), ()), (('middle', 'grade'), ())],
     'comics':             [(('graphic', 'novels'), ()), (('graphic', 'novel'), ()), (('comics',), ()),
                            (('comic',), ()), (('manga',), ())],
-    'nonfiction':         [(('non', 'fiction'), ()), (('nonfiction',), ()), (('biography',), ()),
+    'nonfiction':         [(('non', 'fiction'), ()), (('nonfiction',), ()), (('biography',), ()), (('biographies',), ()),
                            (('memoir',), ()), (('memoirs',), ()), (('autobiography',), ()),
                            (('history',), ()), (('self', 'help'), ()), (('psychology',), ()),
                            (('philosophy',), ()), (('business',), ()), (('science',), ('fiction', 'fi'))],
