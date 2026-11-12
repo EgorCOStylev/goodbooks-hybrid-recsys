@@ -51,6 +51,28 @@ def split_per_user(ratings, test_share=0.2, min_user_ratings=5, seed=42):
     return ratings[~test_mask].reset_index(drop=True), ratings[test_mask].reset_index(drop=True)
 
 
+def split_train_val_test(ratings, test_share=0.2, val_share=0.2, min_user_ratings=5, seed=42):
+    """Three-way per-user hold-out.
+
+    The test part is exactly the homework split (same seed), so final numbers stay
+    comparable with the homework. Validation is cut from the remaining train and is
+    used only to tune weights and hyperparameters; models are then refitted on
+    fit + val before the single test evaluation.
+    """
+    train, test = split_per_user(ratings, test_share, min_user_ratings, seed)
+    fit, val    = split_per_user(train, val_share, min_user_ratings, seed + 1)
+    return fit, val, test
+
+
+def truncate_history(train, users, keep, seed=42):
+    """Keep only `keep` random train ratings for the given users to simulate new users."""
+    rng   = np.random.default_rng(seed)
+    part  = train[train.user_id.isin(users)]
+    rank  = part.assign(rnd=rng.random(len(part))).groupby('user_id').rnd.rank(method='first')
+    drop  = part.index[rank > keep]
+    return train.drop(index=drop).reset_index(drop=True)
+
+
 @dataclass
 class Index:
     """Positions of users and books in the interaction matrix."""
