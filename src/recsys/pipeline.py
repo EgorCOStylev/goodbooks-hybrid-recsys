@@ -12,6 +12,7 @@ from .data import truncate_history
 GENERATORS    = ('cf_implicit', 'cf_explicit', 'content', 'svd', 'known', 'bayes')
 POOL_FEATURES = ('content_cos', 'cf_sum', 'cf_max', 'genre_affinity', 'bayes_mean', 'log_ratings_count', 'std_rating')
 SVD_PARAMS    = {'n_factors': 50, 'reg_all': 0.05, 'n_epochs': 20, 'lr_all': 0.005, 'random_state': 42}
+WEIGHT_GRID   = [-0.5, 0, 0.05, 0.1, 0.25, 0.5, 1, 2]
 
 
 @dataclass
@@ -94,3 +95,24 @@ def scored_pool(fitted, users, rel, n_per_model=100, chunk=2000, feature_cols=PO
             .join(fitted.book_feats.iloc[pool.book.values].reset_index(drop=True)))
     pool = hybrid.add_columns(pool, cols[list(feature_cols)])
     return hybrid.rank_within_user(pool, list(feature_cols))
+
+
+def tune_segment_weights(pool, rel, segment, users, generators, grid=WEIGHT_GRID, n_tune=8000, k=10, seed=42):
+    """Staged coordinate ascent per segment, the procedure of notebook 02.
+
+    For each segment the generator weights are tuned first (start: cf_implicit = 1),
+    then the pool features are added at zero weight and tuning continues. Active users
+    are tuned on a random sample of n_tune users. Returns {(variant, segment): weights}
+    with variant 'models' or 'features'.
+    """
+    rng        = np.random.default_rng(seed)
+    seg_users  = {s: users[segment[users] == s] for s in ('new', 'active')}
+    tune_users = {'new': seg_users['new'],
+                  'active': rng.choice(seg_users['active'], min(n_tune, len(seg_users['active'])), replace=False)}
+    init_models = {g: float(g == 'cf_implicit') for g in generators}
+    weights = {}
+    for s, u in tune_users.items():
+        weights[('models', s)], _, _ = hybrid.tune_weights(pool, rel, init_models, grid, k=k, users=u)
+        init = {**weights[('models', s)], **{f: 0.0 for f in POOL_FEATURES}}
+        weights[('features', s)], _, _ = hybrid.tune_weights(pool, rel, init, grid, k=k, users=u)
+    return weights
